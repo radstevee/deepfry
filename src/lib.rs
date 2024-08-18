@@ -1,3 +1,4 @@
+#![feature(isqrt)]
 use std::io;
 
 use clap::ValueEnum;
@@ -10,6 +11,7 @@ pub enum ShiftDirection {
     Right,
     Not,
     Multiply,
+    Sqrt,
 }
 
 impl ShiftDirection {
@@ -19,6 +21,7 @@ impl ShiftDirection {
             Self::Right => value >> other,
             Self::Not => !value,
             Self::Multiply => value * other,
+            Self::Sqrt => value.isqrt(),
         }
     }
 }
