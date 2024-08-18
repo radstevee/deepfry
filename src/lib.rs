@@ -15,18 +15,27 @@ pub enum ChangeMode {
     Not,
     /// Multiplies the bits.
     Multiply,
-    /// Uses the square root of the bit.
+    /// Uses the square root of the bits.
     Sqrt,
+    /// Does an XOR operation on the bits.
+    Xor,
+    /// Does an OR operation on the bits.
+    Or,
+    /// Does an AND operation on the bits.
+    And,
 }
 
 impl ChangeMode {
     pub fn shift(self, value: u8, other: u8) -> u8 {
         match self {
-            Self::ShiftLeft => value >> other,
-            Self::ShiftRight => value << other,
+            Self::ShiftLeft => value << other,
+            Self::ShiftRight => value >> other,
             Self::Not => !value,
             Self::Multiply => value * other,
             Self::Sqrt => value.isqrt(),
+            Self::Xor => value ^ other,
+            Self::Or => value | other,
+            Self::And => value & other,
         }
     }
 }

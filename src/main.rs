@@ -2,7 +2,7 @@ use std::{io, path::PathBuf};
 
 use clap::Parser;
 use clap_num::number_range;
-use deepfry::{deepfry, ChangeMode};
+use deepfry::{deepfry, ChangeMode, DeepfryAlgorithm::BitChange};
 
 fn parse_shift_value(s: &str) -> Result<u8, String> {
     number_range(s, 0, 8)
@@ -44,7 +44,7 @@ fn main() -> io::Result<()> {
 
     deepfry(
         &mut image,
-        deepfry::DeepfryAlgorithm::BitChange(args.mode, args.red, args.green, args.blue),
+        BitChange(args.mode, args.red, args.green, args.blue),
     )?;
 
     image.save(args.output).unwrap();
