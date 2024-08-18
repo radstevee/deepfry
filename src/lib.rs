@@ -4,21 +4,26 @@ use std::io;
 use clap::ValueEnum;
 use image::{Rgb, RgbImage};
 
-/// The direction to shift bits in.
+/// The mode for Bit changing.
 #[derive(Debug, Clone, ValueEnum, Copy)]
-pub enum ShiftDirection {
-    Left,
-    Right,
+pub enum ChangeMode {
+    /// Shifts bits to the left.
+    ShiftLeft,
+    /// Shifts bits to the right.
+    ShiftRight,
+    /// Does a NOT operation on the bits.
     Not,
+    /// Multiplies the bits.
     Multiply,
+    /// Uses the square root of the bit.
     Sqrt,
 }
 
-impl ShiftDirection {
+impl ChangeMode {
     pub fn shift(self, value: u8, other: u8) -> u8 {
         match self {
-            Self::Left => value << other,
-            Self::Right => value >> other,
+            Self::ShiftLeft => value >> other,
+            Self::ShiftRight => value << other,
             Self::Not => !value,
             Self::Multiply => value * other,
             Self::Sqrt => value.isqrt(),
@@ -26,11 +31,11 @@ impl ShiftDirection {
     }
 }
 
-#[derive(Debug, Clone)]
 /// The algorithm to use while deepfrying.
+#[derive(Debug, Clone)]
 pub enum DeepfryAlgorithm {
-    /// Shifts all the RGB bits by n.
-    Bitshift(ShiftDirection, u8, u8, u8),
+    /// Changes bits based off a ChangeMode.
+    BitChange(ChangeMode, u8, u8, u8),
 }
 
 /// Deepfries an image in place.
@@ -41,7 +46,7 @@ pub fn deepfry(image: &mut RgbImage, algo: DeepfryAlgorithm) -> io::Result<()> {
         let blue = rgb.0[2];
 
         let new_rgb = match algo {
-            DeepfryAlgorithm::Bitshift(direction, r, g, b) => {
+            DeepfryAlgorithm::BitChange(direction, r, g, b) => {
                 let new_red = direction.shift(red, r);
                 let new_green = direction.shift(green, g);
                 let new_blue = direction.shift(blue, b);
