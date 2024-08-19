@@ -1,0 +1,20 @@
+[[algorithms]]
+algorithm = "BitChange"
+
+change_mode = "ShiftLeft"
+
+red = 81723
+green = 5234
+blue = 24523
+
+[[algorithms]]
+algorithm = "BitChange"
+change_mode = "RandomAdd"
+red = 42
+green = 100
+blue = 77
+
+[[algorithms]]
+algorithm = "BitChange"
+change_mode = "Not"
+

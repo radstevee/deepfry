@@ -1,12 +1,15 @@
 use std::io;
 
+use clap::ValueEnum;
+use enum_stringify::EnumStringify;
+use image::{Rgb, RgbImage};
 use rand::Rng;
 use rand::SeedableRng;
-use clap::ValueEnum;
-use image::{Rgb, RgbImage};
+use serde::Deserialize;
+use serde::Serialize;
 
 /// The mode for Bit changing.
-#[derive(Debug, Clone, ValueEnum, Copy)]
+#[derive(Debug, Clone, ValueEnum, Copy, EnumStringify)]
 pub enum ChangeMode {
     /// Shifts bits to the left.
     ShiftLeft,
@@ -47,11 +50,11 @@ impl ChangeMode {
             Self::RandomAdd => {
                 let mut rng = rand::rngs::SmallRng::seed_from_u64(other as u64);
                 value.wrapping_add(rng.gen())
-            },
+            }
             Self::RandomMul => {
                 let mut rng = rand::rngs::SmallRng::seed_from_u64(other as u64);
                 value.wrapping_mul(rng.gen())
-            },
+            }
         }
     }
 }
@@ -85,7 +88,7 @@ pub fn deepfry(image: &mut RgbImage, algo: DeepfryAlgorithm) -> io::Result<()> {
     Ok(())
 }
 
-pub trait NumberExt {
+trait NumberExt {
     fn sqrt(self) -> Self;
 }
 
@@ -94,3 +97,45 @@ impl NumberExt for u8 {
         (self as f32).sqrt() as u8
     }
 }
+
+/// A configuration for an algorithm.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct AlgorithmConfig {
+    pub algorithm: String,
+    pub change_mode: Option<String>,
+    pub red: Option<u32>,
+    pub green: Option<u32>,
+    pub blue: Option<u32>,
+}
+
+impl AlgorithmConfig {
+    pub fn algo(self) -> Result<DeepfryAlgorithm, String> {
+        return match self.algorithm.as_str() {
+            "BitChange" => {
+                if self.change_mode.is_none() {
+                    return Err("bit changing mode is not set".to_string());
+                }
+
+                let r = self.red.unwrap_or(0);
+                let g = self.green.unwrap_or(0);
+                let b = self.blue.unwrap_or(0);
+
+                let change_mode = ChangeMode::try_from(self.change_mode.clone().unwrap());
+
+                match change_mode {
+                    Ok(change_mode) => Ok(DeepfryAlgorithm::BitChange(change_mode, r, g, b)),
+                    Err(_) => Err(format!("invalid bit changing mode: {:?}", self.change_mode)),
+                }
+            }
+            _ => return Err(format!("invalid algorithm: {}", self.algorithm)),
+        };
+    }
+}
+
+/// A preset for deepfrying images using several algorithms
+/// and configs without running multiple commands.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Preset {
+    pub algorithms: Vec<AlgorithmConfig>,
+}
+
