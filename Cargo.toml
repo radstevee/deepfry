@@ -9,3 +9,4 @@ edition = "2021"
 clap = { version = "4.5.16", features = ["derive"] }
 clap-num = "1.1.1"
 image = "0.25.2"
+rand = { version = "0.8.5", features = ["small_rng"] }

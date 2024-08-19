@@ -304,6 +304,7 @@ dependencies = [
  "clap",
  "clap-num",
  "image",
+ "rand",
 ]
 
 [[package]]
