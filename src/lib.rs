@@ -1,4 +1,3 @@
-#![feature(isqrt)]
 use std::io;
 
 use clap::ValueEnum;
@@ -23,19 +22,22 @@ pub enum ChangeMode {
     Or,
     /// Does an AND operation on the bits.
     And,
+    /// Raises the bits to the power of the other provided value
+    Exponent,
 }
 
 impl ChangeMode {
     pub fn shift(self, value: u8, other: u8) -> u8 {
         match self {
-            Self::ShiftLeft => value << other,
-            Self::ShiftRight => value >> other,
+            Self::ShiftLeft => value.wrapping_shl(other.into()),
+            Self::ShiftRight => value.wrapping_shr(other.into()),
             Self::Not => !value,
-            Self::Multiply => value * other,
-            Self::Sqrt => value.isqrt(),
+            Self::Multiply => value.wrapping_mul(other),
+            Self::Sqrt => sqrt(value),
             Self::Xor => value ^ other,
             Self::Or => value | other,
             Self::And => value & other,
+            Self::Exponent => value.wrapping_pow(other.into()),
         }
     }
 }
@@ -67,4 +69,8 @@ pub fn deepfry(image: &mut RgbImage, algo: DeepfryAlgorithm) -> io::Result<()> {
     }
 
     Ok(())
+}
+
+fn sqrt(value: u8) -> u8 {
+    (value as f32).sqrt() as u8
 }
