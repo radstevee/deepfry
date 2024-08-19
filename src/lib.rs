@@ -1,5 +1,7 @@
 use std::io;
 
+use rand::Rng;
+use rand::SeedableRng;
 use clap::ValueEnum;
 use image::{Rgb, RgbImage};
 
@@ -24,20 +26,32 @@ pub enum ChangeMode {
     And,
     /// Raises the bits to the power of the other provided value
     Exponent,
+    /// Adds a random value to the bits, using the other value as a seed.
+    RandomAdd,
+    /// Multiplies the bits by a random value, using the other value as a seed.
+    RandomMul,
 }
 
 impl ChangeMode {
-    pub fn shift(self, value: u8, other: u8) -> u8 {
+    pub fn shift(self, value: u8, other: u32) -> u8 {
         match self {
             Self::ShiftLeft => value.wrapping_shl(other.into()),
             Self::ShiftRight => value.wrapping_shr(other.into()),
             Self::Not => !value,
-            Self::Multiply => value.wrapping_mul(other),
-            Self::Sqrt => sqrt(value),
-            Self::Xor => value ^ other,
-            Self::Or => value | other,
-            Self::And => value & other,
+            Self::Multiply => value.wrapping_mul(other.try_into().unwrap()),
+            Self::Sqrt => value.sqrt(),
+            Self::Xor => value ^ other as u8,
+            Self::Or => value | other as u8,
+            Self::And => value & other as u8,
             Self::Exponent => value.wrapping_pow(other.into()),
+            Self::RandomAdd => {
+                let mut rng = rand::rngs::SmallRng::seed_from_u64(other as u64);
+                value.wrapping_add(rng.gen())
+            },
+            Self::RandomMul => {
+                let mut rng = rand::rngs::SmallRng::seed_from_u64(other as u64);
+                value.wrapping_mul(rng.gen())
+            },
         }
     }
 }
@@ -46,7 +60,7 @@ impl ChangeMode {
 #[derive(Debug, Clone)]
 pub enum DeepfryAlgorithm {
     /// Changes bits based off a ChangeMode.
-    BitChange(ChangeMode, u8, u8, u8),
+    BitChange(ChangeMode, u32, u32, u32),
 }
 
 /// Deepfries an image in place.
@@ -71,6 +85,12 @@ pub fn deepfry(image: &mut RgbImage, algo: DeepfryAlgorithm) -> io::Result<()> {
     Ok(())
 }
 
-fn sqrt(value: u8) -> u8 {
-    (value as f32).sqrt() as u8
+pub trait NumberExt {
+    fn sqrt(self) -> Self;
+}
+
+impl NumberExt for u8 {
+    fn sqrt(self) -> Self {
+        (self as f32).sqrt() as u8
+    }
 }

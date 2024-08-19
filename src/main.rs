@@ -4,8 +4,8 @@ use clap::Parser;
 use clap_num::number_range;
 use deepfry::{deepfry, ChangeMode, DeepfryAlgorithm::BitChange};
 
-fn parse_shift_value(s: &str) -> Result<u8, String> {
-    number_range(s, 0, 8)
+fn parse_shift_value(s: &str) -> Result<u32, String> {
+    number_range(s, 0, u32::MAX)
 }
 
 /// Deepfry - A tool for deepfrying images.
@@ -21,16 +21,16 @@ struct Args {
     output: PathBuf,
 
     /// The red shift.
-    #[arg(short = 'r', value_name = "red", value_parser=parse_shift_value)]
-    red: u8,
+    #[arg(short = 'r', value_name = "red", value_parser=parse_shift_value, default_value = "1")]
+    red: u32,
 
     /// The green shift.
-    #[arg(short = 'g', value_name = "green", value_parser=parse_shift_value)]
-    green: u8,
+    #[arg(short = 'g', value_name = "green", value_parser=parse_shift_value, default_value = "1")]
+    green: u32,
 
     /// The blue shift.
-    #[arg(short = 'b', value_name = "blue", value_parser=parse_shift_value)]
-    blue: u8,
+    #[arg(short = 'b', value_name = "blue", value_parser=parse_shift_value, default_value = "1")]
+    blue: u32,
 
     /// The bit changing mode.
     #[arg(short = 'm', value_name = "mode")]
