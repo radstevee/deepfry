@@ -2,11 +2,7 @@ use std::{error::Error, fs, path::PathBuf};
 
 use clap::Parser;
 use clap_num::number_range;
-use deepfry::{
-    deepfry, ChangeMode,
-    DeepfryAlgorithm::{self, BitChange},
-    Preset,
-};
+use deepfry::{deepfry, AlgorithmConfig, ChangeMode, DeepfryAlgorithm::BitChange, Preset};
 
 fn parse_shift_value(s: &str) -> Result<u32, String> {
     number_range(s, 0, u32::MAX)
@@ -50,30 +46,23 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut image = image::open(args.input).unwrap().to_rgb8();
 
-    if args.preset.is_none() && args.mode.is_none() {
-        panic!("no bit change mode or preset specified")
-    }
+    assert!(
+        args.preset.is_some() || args.mode.is_some(),
+        "no bit change mode or preset specified"
+    );
 
     if let Some(preset) = args.preset {
-        let content = fs::read_to_string(preset)?;
+        let content = &fs::read_to_string(preset)?;
 
-        let preset: Preset = toml::from_str(&*content)?;
-        let algos = preset
+        let preset: Preset = toml::from_str(content)?;
+        preset
             .algorithms
-            .iter()
-            .map(|algo| algo.clone().algo())
+            .into_iter()
+            .map(AlgorithmConfig::algo)
             .map(|result| {
-                if result.is_err() {
-                    panic!("error whilst validating preset: {}", result.err().unwrap())
-                }
-
-                result.unwrap()
+                result.unwrap_or_else(|err| panic!("error while validating preset {err}"))
             })
-            .collect::<Vec<DeepfryAlgorithm>>();
-
-        for algo in algos {
-            deepfry(&mut image, algo)?;
-        }
+            .try_for_each(|algo| deepfry(&mut image, algo))?
     } else {
         deepfry(
             &mut image,
@@ -81,7 +70,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         )?;
     }
 
-    image.save(args.output).unwrap();
-
+    image.save(args.output).expect("failed to save image");
     Ok(())
 }

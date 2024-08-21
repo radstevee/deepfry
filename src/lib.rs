@@ -42,7 +42,7 @@ impl ChangeMode {
             Self::ShiftRight => value.wrapping_shr(other.into()),
             Self::Not => !value,
             Self::Multiply => value.wrapping_mul(other.try_into().unwrap()),
-            Self::Sqrt => value.sqrt(),
+            Self::Sqrt => (value as f32).sqrt() as u8,
             Self::Xor => value ^ other as u8,
             Self::Or => value | other as u8,
             Self::And => value & other as u8,
@@ -69,11 +69,9 @@ pub enum DeepfryAlgorithm {
 /// Deepfries an image in place.
 pub fn deepfry(image: &mut RgbImage, algo: DeepfryAlgorithm) -> io::Result<()> {
     for rgb in image.pixels_mut() {
-        let red = rgb.0[0];
-        let green = rgb.0[1];
-        let blue = rgb.0[2];
+        let [red, green, blue] = rgb.0;
 
-        let new_rgb = match algo {
+        let (new_r, new_g, new_b) = match algo {
             DeepfryAlgorithm::BitChange(direction, r, g, b) => {
                 let new_red = direction.shift(red, r);
                 let new_green = direction.shift(green, g);
@@ -82,20 +80,10 @@ pub fn deepfry(image: &mut RgbImage, algo: DeepfryAlgorithm) -> io::Result<()> {
             }
         };
 
-        *rgb = Rgb([new_rgb.0, new_rgb.1, new_rgb.2])
+        *rgb = Rgb([new_r, new_g, new_b])
     }
 
     Ok(())
-}
-
-trait NumberExt {
-    fn sqrt(self) -> Self;
-}
-
-impl NumberExt for u8 {
-    fn sqrt(self) -> Self {
-        (self as f32).sqrt() as u8
-    }
 }
 
 /// A configuration for an algorithm.
@@ -116,16 +104,13 @@ impl AlgorithmConfig {
                     return Err("bit changing mode is not set".to_string());
                 }
 
-                let r = self.red.unwrap_or(0);
-                let g = self.green.unwrap_or(0);
-                let b = self.blue.unwrap_or(0);
+                let r = self.red.unwrap_or_default();
+                let g = self.green.unwrap_or_default();
+                let b = self.blue.unwrap_or_default();
 
-                let change_mode = ChangeMode::try_from(self.change_mode.clone().unwrap());
-
-                match change_mode {
-                    Ok(change_mode) => Ok(DeepfryAlgorithm::BitChange(change_mode, r, g, b)),
-                    Err(_) => Err(format!("invalid bit changing mode: {:?}", self.change_mode)),
-                }
+                ChangeMode::try_from(self.change_mode.clone().unwrap())
+                    .map(|change_mode| DeepfryAlgorithm::BitChange(change_mode, r, g, b))
+                    .map_err(|_| format!("invalid bit changing mode {:?}", self.change_mode))
             }
             _ => return Err(format!("invalid algorithm: {}", self.algorithm)),
         };
@@ -138,4 +123,3 @@ impl AlgorithmConfig {
 pub struct Preset {
     pub algorithms: Vec<AlgorithmConfig>,
 }
-
